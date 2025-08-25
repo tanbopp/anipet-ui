@@ -2,12 +2,12 @@
   "name": "Centrova Sense - Anipet AI",
   "short_name": "Centrova Sense",
   "description": "AI-powered animal detection and identification app",
-  "start_url": "/",
+  "start_url": "/anipet-ui/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait",
-  "scope": "/",
+  "scope": "/anipet-ui/",
   "lang": "id",
   "icons": [
     {

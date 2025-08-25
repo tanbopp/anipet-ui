@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Anipet AI</title>
+	
+	<!-- Manifest for PWA -->
+	<link rel="manifest" href="manifest.json">
+	
+	<!-- iOS specific meta tags -->
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="apple-mobile-web-app-title" content="Centrova Sense">
+	<link rel="apple-touch-icon" href="apple-touch-icon.png">
+	<link rel="apple-touch-startup-image" href="apple-splash-screen.png">
+	
+	<!-- Theme colors -->
+	<meta name="theme-color" content="#000000">
+	<meta name="msapplication-navbutton-color" content="#000000">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		async function startCamera() {
+			try {
+				const video = document.getElementById('cameraPreview');
+				const backgroundVideo = document.getElementById('backgroundCameraPreview');
+				const errorDiv = document.getElementById('cameraError');
+				
+				// Request camera access
+				const stream = await navigator.mediaDevices.getUserMedia({ 
+					video: { 
+						facingMode: 'environment' // Use back camera if available
+					} 
+				});
+				
+				// Feed camera stream to both videos
+				video.srcObject = stream;
+				backgroundVideo.srcObject = stream;
+				
+				video.style.display = 'block';
+				errorDiv.classList.add('hidden');
+			} catch (error) {
+				console.error('Error accessing camera:', error);
+				const video = document.getElementById('cameraPreview');
+				const backgroundVideo = document.getElementById('backgroundCameraPreview');
+				const errorDiv = document.getElementById('cameraError');
+				
+				video.style.display = 'none';
+				backgroundVideo.style.display = 'none';
+				errorDiv.classList.remove('hidden');
+			}
+		}
+		
+		// Start camera when page loads
+		window.addEventListener('load', startCamera);
+	</script>
+</head>
+<body class="h-screen w-full">
+	<div class="w-full h-full absolute z-[-10] inset-0 max-w-lg mx-auto">
+		<video id="backgroundCameraPreview" class="w-full h-full object-cover opacity-30" autoplay muted playsinline></video>
+	</div>
+	<div class="max-w-lg mx-auto z-50 w-full h-screen bg-black/20 flex flex-col">
+		<div class="w-full h-auto py-4 bg-black flex flex-col items-center px-4 flex-shrink-0">
+			<h1 class="text-center text-white mb-2">Centrova Sense</h1>
+			<select class="appearance-none bg-neutral-800 text-white mx-auto rounded-full px-3 py-1 text-center outline-none">
+				<option value="">1.0 (Auto Detect)</option>
+				<option value="v1.1">1.1 (Enhanced)</option>
+				<option value="v1.2">1.2 (Advanced)</option>
+				<option value="v2.0">2.0 (Beta)</option>
+			</select>
+		</div>
+		<div class="flex-1 bg-gradient-to-b from-black to-transparent">
+			<div class="w-full h-full bg-neutral-300 rounded-[44px] overflow-hidden relative">
+				<video id="cameraPreview" class="w-full h-full object-cover" autoplay muted playsinline></video>
+				<div id="cameraError" class="hidden absolute inset-0 flex items-center justify-center text-gray-600">
+					<p class="text-center">Kamera tidak dapat diakses<br><small>Pastikan izin kamera telah diberikan</small></p>
+				</div>
+			</div>
+		</div>
+		<div class="w-full py-5 flex items-center justify-between px-8 flex-shrink-0">
+			<button type="button" class="h-[56px] scale-100 active:scale-90 transition bg-neutral-700/50 aspect-square rounded-full flex justify-center items-center">
+				<svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<g clip-path="url(#clip0_7733_322)">
+				<path d="M19.8333 0.5L20.4891 3.87658C20.8955 5.96867 22.5313 7.60453 24.6234 8.01086L28 8.66667L24.6234 9.32247C23.9589 9.45154 23.3404 9.70466 22.7927 10.057C21.9888 10.5743 21.3374 11.3055 20.917 12.1721C20.7222 12.5738 20.577 13.0046 20.4891 13.4568L19.8333 16.8333L19.1775 13.4568C18.7712 11.3647 17.1354 9.7288 15.0433 9.32247L11.6667 8.66667L15.0433 8.01086C16.0248 7.82023 16.9059 7.35896 17.6067 6.70692C18.1793 6.17422 18.6315 5.51418 18.9199 4.77036C19.0309 4.48402 19.1176 4.18527 19.1775 3.87658L19.8333 0.5Z" fill="white"/>
+				<path fill-rule="evenodd" clip-rule="evenodd" d="M18.9199 4.77036C19.2302 4.9925 19.5296 5.23237 19.8165 5.48942C21.204 6.73289 22.2244 8.31244 22.7927 10.057C21.9888 10.5743 21.3374 11.3055 20.917 12.1721C20.7442 10.9692 20.3043 9.81481 19.6237 8.79618C19.0787 7.98063 18.3944 7.27433 17.6067 6.70692C18.1793 6.17422 18.6315 5.51418 18.9199 4.77036ZM23.2191 11.9381C22.7087 12.4253 22.3471 13.0668 22.2066 13.7902L21.5514 17.1672C21.3916 17.9896 20.6712 18.5833 19.8333 18.5833C19.6074 18.5833 19.3899 18.5401 19.1897 18.4609C19.0083 18.6858 18.8142 18.9018 18.608 19.108C17.0765 20.6396 14.9993 21.5 12.8333 21.5C11.2181 21.5 9.63919 21.021 8.29619 20.1237C6.95319 19.2263 5.90644 17.9508 5.28833 16.4586C4.67021 14.9663 4.50848 13.3243 4.8236 11.7401C5.13871 10.1559 5.91651 8.70076 7.05864 7.55863C8.20077 6.4165 9.65593 5.6387 11.2401 5.32359C12.823 5.00872 14.4638 5.16995 15.9551 5.78686C16.6361 5.33952 17.1489 4.65989 17.3837 3.85791C15.8826 3.13137 14.2169 2.7665 12.5218 2.81288C9.83739 2.88634 7.28319 3.98549 5.38434 5.88433C3.4855 7.78318 2.38635 10.3374 2.31289 13.0217C2.23944 15.7061 3.19727 18.3166 4.98943 20.3164C6.78159 22.3163 9.27186 23.5535 11.9482 23.7736C14.6245 23.9938 17.2835 23.1801 19.3783 21.5L23.6717 25.7933C23.7801 25.9027 23.9092 25.9895 24.0513 26.0487C24.1935 26.1079 24.346 26.1384 24.5 26.1384C24.654 26.1384 24.8065 26.1079 24.9487 26.0487C25.0909 25.9895 25.2199 25.9027 25.3283 25.7933C25.5386 25.5758 25.6562 25.2851 25.6562 24.9825C25.6562 24.6799 25.5386 24.3892 25.3283 24.1717L21 19.8783C22.6801 17.7835 23.4938 15.1245 23.2736 12.4482C23.2596 12.2773 23.2414 12.1073 23.2191 11.9381Z" fill="white"/>
+				</g>
+				<defs>
+				<clipPath id="clip0_7733_322">
+				<rect width="28" height="28" fill="white" transform="translate(0 0.5)"/>
+				</clipPath>
+				</defs>
+				</svg>
+			</button>
+			<button type="button" class="h-[64px] aspect-square rounded-full flex justify-center items-center scale-100 active:scale-90 transition">
+				<svg width="64" height="65" viewBox="0 0 64 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<rect x="2" y="2.5" width="60" height="60" rx="30" stroke="white" stroke-width="4"/>
+				<circle cx="32" cy="32.5" r="25" fill="white"/>
+				</svg>
+			</button>
+			<button type="button" class="h-[56px] scale-100 active:scale-90 transition bg-neutral-700/50 aspect-square rounded-full flex justify-center items-center">
+				<svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M14 18.0001C15.2377 18.0001 16.4247 17.5084 17.2998 16.6332C18.175 15.7581 18.6667 14.5711 18.6667 13.3334V6.33342C18.6667 5.09574 18.175 3.90875 17.2998 3.03358C16.4247 2.15841 15.2377 1.66675 14 1.66675C12.7623 1.66675 11.5753 2.15841 10.7002 3.03358C9.82499 3.90875 9.33332 5.09574 9.33332 6.33342V13.3334C9.33332 14.5711 9.82499 15.7581 10.7002 16.6332C11.5753 17.5084 12.7623 18.0001 14 18.0001ZM11.6667 6.33342C11.6667 5.71458 11.9125 5.12108 12.3501 4.6835C12.7877 4.24591 13.3812 4.00008 14 4.00008C14.6188 4.00008 15.2123 4.24591 15.6499 4.6835C16.0875 5.12108 16.3333 5.71458 16.3333 6.33342V13.3334C16.3333 13.9523 16.0875 14.5457 15.6499 14.9833C15.2123 15.4209 14.6188 15.6667 14 15.6667C13.3812 15.6667 12.7877 15.4209 12.3501 14.9833C11.9125 14.5457 11.6667 13.9523 11.6667 13.3334V6.33342ZM23.3333 13.3334C23.3333 13.024 23.2104 12.7273 22.9916 12.5085C22.7728 12.2897 22.4761 12.1667 22.1667 12.1667C21.8572 12.1667 21.5605 12.2897 21.3417 12.5085C21.1229 12.7273 21 13.024 21 13.3334C21 15.1899 20.2625 16.9704 18.9497 18.2832C17.637 19.5959 15.8565 20.3334 14 20.3334C12.1435 20.3334 10.363 19.5959 9.05024 18.2832C7.73749 16.9704 6.99999 15.1899 6.99999 13.3334C6.99999 13.024 6.87707 12.7273 6.65828 12.5085C6.43949 12.2897 6.14274 12.1667 5.83332 12.1667C5.5239 12.1667 5.22716 12.2897 5.00837 12.5085C4.78957 12.7273 4.66666 13.024 4.66666 13.3334C4.66872 15.6053 5.49933 17.7983 7.00279 19.5015C8.50624 21.2047 10.5793 22.3011 12.8333 22.5851V25.0001H10.5C10.1906 25.0001 9.89383 25.123 9.67503 25.3418C9.45624 25.5606 9.33332 25.8573 9.33332 26.1667C9.33332 26.4762 9.45624 26.7729 9.67503 26.9917C9.89383 27.2105 10.1906 27.3334 10.5 27.3334H17.5C17.8094 27.3334 18.1062 27.2105 18.3249 26.9917C18.5437 26.7729 18.6667 26.4762 18.6667 26.1667C18.6667 25.8573 18.5437 25.5606 18.3249 25.3418C18.1062 25.123 17.8094 25.0001 17.5 25.0001H15.1667V22.5851C17.4207 22.3011 19.4937 21.2047 20.9972 19.5015C22.5006 17.7983 23.3313 15.6053 23.3333 13.3334Z" fill="white"/>
+				</svg>
+			</button>
+		</div>
+	</div>
+</body>
+</html>

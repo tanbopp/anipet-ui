@@ -75,23 +75,31 @@
 				margin-top: 0;
 				padding-top: 0;
 			}
-			
-			.status-bar-overlay {
-				position: fixed;
-				top: 0;
-				left: 0;
-				right: 0;
-				height: env(safe-area-inset-top, 44px);
-				background: #000000;
-				z-index: 9999;
-				pointer-events: none;
-			}
 		}
 
 		/* Improve video rendering on iOS */
 		video {
 			-webkit-playsinline: true;
 			object-fit: cover;
+		}
+
+		.start-camera-overlay {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			backdrop-filter: blur(20px);
+			-webkit-backdrop-filter: blur(20px);
+		}
+
+		.pulse {
+			animation: pulse 2s infinite;
+		}
+
+		@keyframes pulse {
+			0%, 100% {
+				opacity: 1;
+			}
+			50% {
+				opacity: 0.7;
+			}
 		}
 	</style>
 	<script>
@@ -100,20 +108,6 @@
 			return window.matchMedia('(display-mode: standalone)').matches || 
 				   window.navigator.standalone === true ||
 				   document.referrer.includes('android-app://');
-		}
-
-		// Handle status bar on iOS
-		function handleStatusBar() {
-			if (isPWA() && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
-				// Try to minimize status bar impact
-				document.documentElement.style.setProperty('--status-bar-height', '0px');
-				
-				// Add specific iOS viewport handling
-				const viewport = document.querySelector('meta[name="viewport"]');
-				if (viewport) {
-					viewport.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover');
-				}
-			}
 		}
 
 		// Register Service Worker
@@ -129,181 +123,106 @@
 			});
 		}
 
-		// Camera permission and initialization
+		// Camera management
 		let cameraStream = null;
-		let permissionGranted = false;
+		let cameraStarted = false;
 
-		async function requestCameraPermission() {
+		async function startCameraManually() {
 			try {
-				// Check if permission was previously granted
-				if (navigator.permissions) {
-					const permission = await navigator.permissions.query({name: 'camera'});
-					if (permission.state === 'granted') {
-						permissionGranted = true;
-						return true;
-					}
-				}
+				const startOverlay = document.getElementById('startCameraOverlay');
+				const video = document.getElementById('cameraPreview');
+				const backgroundVideo = document.getElementById('backgroundCameraPreview');
+				const errorDiv = document.getElementById('cameraError');
 				
-				// For iOS in PWA mode, try to get camera without explicit permission request
-				if (isPWA() && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
-					return await initializeCameraDirectly();
-				}
+				// Show loading state
+				startOverlay.innerHTML = `
+					<div class="text-center">
+						<div class="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+						<h2 class="text-xl font-bold text-white mb-2">Memulai Kamera...</h2>
+						<p class="text-white/80">Mohon tunggu sebentar</p>
+					</div>
+				`;
 				
-				return false;
-			} catch (error) {
-				console.log('Permission check failed:', error);
-				return false;
-			}
-		}
-
-		async function initializeCameraDirectly() {
-			try {
+				// Request camera with optimized settings
 				const constraints = {
 					video: {
 						facingMode: 'environment',
 						width: { ideal: 1280, max: 1920 },
 						height: { ideal: 720, max: 1080 },
-						frameRate: { ideal: 24, max: 30 }, // Lower frame rate can reduce resource usage
-						aspectRatio: { ideal: 16/9 }
+						frameRate: { ideal: 24, max: 30 }
 					},
-					audio: false // Explicitly disable audio to prevent red status bar
+					audio: false // NO AUDIO = NO RED STATUS BAR
 				};
 				
 				const stream = await navigator.mediaDevices.getUserMedia(constraints);
 				cameraStream = stream;
-				permissionGranted = true;
-				return true;
-			} catch (error) {
-				console.log('Direct camera access failed:', error);
-				return false;
-			}
-		}
-
-		async function startCamera() {
-			try {
-				const video = document.getElementById('cameraPreview');
-				const backgroundVideo = document.getElementById('backgroundCameraPreview');
-				const errorDiv = document.getElementById('cameraError');
 				
-				// If we already have a stream, use it
-				if (cameraStream) {
-					video.srcObject = cameraStream;
-					backgroundVideo.srcObject = cameraStream;
-					video.style.display = 'block';
-					errorDiv.classList.add('hidden');
-					return;
-				}
+				// Apply stream to videos
+				video.srcObject = stream;
+				backgroundVideo.srcObject = stream;
 				
-				// Try to use existing permission or request new one
-				if (!permissionGranted) {
-					const hasPermission = await requestCameraPermission();
-					if (!hasPermission) {
-						throw new Error('Camera permission not granted');
-					}
-				}
-				
-				// Use the stream we got from permission request
-				if (cameraStream) {
-					video.srcObject = cameraStream;
-					backgroundVideo.srcObject = cameraStream;
-				} else {
-					// Fallback: request camera again
-					const constraints = {
-						video: { 
-							facingMode: 'environment',
-							width: { ideal: 1280 },
-							height: { ideal: 720 }
-						},
-						audio: false // Critical: No audio to prevent red status bar
-					};
-					
-					const stream = await navigator.mediaDevices.getUserMedia(constraints);
-					cameraStream = stream;
-					video.srcObject = stream;
-					backgroundVideo.srcObject = stream;
-				}
-				
+				// Hide overlay and show camera
+				startOverlay.classList.add('hidden');
 				video.style.display = 'block';
 				errorDiv.classList.add('hidden');
+				cameraStarted = true;
 				
-				// Store permission status for future use
+				// Store permission for future use
 				if (typeof(Storage) !== "undefined") {
 					localStorage.setItem('cameraPermissionGranted', 'true');
 				}
 				
 			} catch (error) {
 				console.error('Error accessing camera:', error);
-				const video = document.getElementById('cameraPreview');
-				const backgroundVideo = document.getElementById('backgroundCameraPreview');
-				const errorDiv = document.getElementById('cameraError');
+				const startOverlay = document.getElementById('startCameraOverlay');
 				
-				video.style.display = 'none';
-				backgroundVideo.style.display = 'none';
-				errorDiv.classList.remove('hidden');
-				
-				// Show more helpful error message
-				const errorText = errorDiv.querySelector('p');
+				let errorMessage = 'Tidak dapat mengakses kamera';
 				if (error.name === 'NotAllowedError') {
-					errorText.innerHTML = 'Izin kamera ditolak<br><small>Silakan izinkan akses kamera dan refresh halaman</small>';
+					errorMessage = 'Izin kamera ditolak. Silakan refresh dan coba lagi.';
 				} else if (error.name === 'NotFoundError') {
-					errorText.innerHTML = 'Kamera tidak ditemukan<br><small>Pastikan perangkat memiliki kamera</small>';
-				} else {
-					errorText.innerHTML = 'Kamera tidak dapat diakses<br><small>Coba tutup aplikasi lain yang menggunakan kamera</small>';
+					errorMessage = 'Kamera tidak ditemukan pada perangkat ini.';
+				} else if (error.name === 'NotReadableError') {
+					errorMessage = 'Kamera sedang digunakan aplikasi lain.';
 				}
+				
+				startOverlay.innerHTML = `
+					<div class="text-center">
+						<div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+							<svg width="32" height="32" fill="white" viewBox="0 0 24 24">
+								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+							</svg>
+						</div>
+						<h2 class="text-xl font-bold text-white mb-2">Oops!</h2>
+						<p class="text-white/80 mb-4">${errorMessage}</p>
+						<button onclick="startCameraManually()" class="bg-white text-gray-800 px-6 py-2 rounded-full font-semibold">
+							Coba Lagi
+						</button>
+					</div>
+				`;
 			}
 		}
 
-		// Check for stored permission on load
-		function checkStoredPermission() {
+		// Auto-check for stored permission
+		function checkAutoStart() {
 			if (typeof(Storage) !== "undefined") {
 				const stored = localStorage.getItem('cameraPermissionGranted');
 				if (stored === 'true') {
-					permissionGranted = true;
+					// Auto start camera if permission was previously granted
+					setTimeout(startCameraManually, 500);
 				}
 			}
 		}
-		
-		// Start camera when page loads
-		window.addEventListener('load', () => {
-			handleStatusBar(); // Handle status bar first
-			checkStoredPermission();
-			
-			// For iOS PWA, delay camera start to minimize red status bar visibility
-			if (isPWA() && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
-				// Wait longer on iOS PWA to let status bar settle
-				setTimeout(startCamera, 1000);
-			} else {
-				setTimeout(startCamera, 100);
-			}
-		});
 
-		// Handle page visibility changes (iOS PWA specific)
+		// Handle page visibility
 		document.addEventListener('visibilitychange', () => {
-			if (!document.hidden && isPWA()) {
-				// App became visible again, restart camera if needed
+			if (!document.hidden && isPWA() && cameraStarted) {
 				setTimeout(() => {
 					const video = document.getElementById('cameraPreview');
-					if (video && !video.srcObject && permissionGranted) {
-						startCamera();
+					if (video && !video.srcObject) {
+						startCameraManually();
 					}
 				}, 500);
 			}
-		});
-
-		// Handle app resume on iOS
-		window.addEventListener('focus', () => {
-			if (isPWA() && permissionGranted) {
-				setTimeout(startCamera, 300);
-			}
-		});
-		
-		// Handle offline/online status
-		window.addEventListener('offline', () => {
-			console.log('App is offline');
-		});
-		
-		window.addEventListener('online', () => {
-			console.log('App is online');
 		});
 
 		// Prevent iOS bounce scrolling
@@ -311,15 +230,36 @@
 			e.preventDefault();
 		}, { passive: false });
 
-		// Prevent context menu on long press
+		// Prevent context menu
 		document.addEventListener('contextmenu', function(e) {
 			e.preventDefault();
+		});
+
+		// Initialize on load
+		window.addEventListener('load', () => {
+			// Check if we should auto-start (if user previously granted permission)
+			checkAutoStart();
 		});
 	</script>
 </head>
 <body class="h-full w-full overflow-hidden m-0 p-0 select-none relative text-center items-center">
-	<!-- Status bar overlay untuk PWA iOS -->
-	<div class="status-bar-overlay"></div>
+	
+	<!-- Start Camera Overlay -->
+	<div id="startCameraOverlay" class="absolute inset-0 z-50 start-camera-overlay flex items-center justify-center px-8">
+		<div class="text-center">
+			<div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 pulse">
+				<svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6l5.25 3.15-.75 1.23L11 15V7z"/>
+				</svg>
+			</div>
+			<h2 class="text-2xl font-bold text-white mb-3">Anipet AI</h2>
+			<p class="text-white/80 mb-6">Tap tombol di bawah untuk memulai deteksi hewan dengan AI</p>
+			<button onclick="startCameraManually()" class="bg-white text-gray-800 px-8 py-3 rounded-full font-bold text-lg shadow-lg">
+				🎥 Mulai Kamera
+			</button>
+			<p class="text-white/60 text-sm mt-4">Tidak akan ada status bar merah jika dimulai manual</p>
+		</div>
+	</div>
 	
 	<div class="w-full h-full absolute z-[-10] inset-0 max-w-lg mx-auto">
 		<video id="backgroundCameraPreview" class="w-full h-full object-cover" autoplay muted playsinline></video>
@@ -336,7 +276,7 @@
 		</div>
 		<div class="flex-1 bg-gradient-to-b from-black to-transparent min-h-0">
 			<div class="w-full h-full bg-neutral-300 rounded-[44px] overflow-hidden relative">
-				<video id="cameraPreview" class="w-full h-full object-cover" autoplay muted playsinline></video>
+				<video id="cameraPreview" class="w-full h-full object-cover" autoplay muted playsinline style="display: none;"></video>
 				<div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-neutral-900/60 backdrop-blur-lg rounded-full text-white text-sm max-w-max whitespace-nowrap">
 					Error: AIResponseFailed()
 				</div>
@@ -359,7 +299,7 @@
 				</defs>
 				</svg>
 			</button>
-			<button type="button" class="h-[64px] aspect-square rounded-full flex justify-center items-center scale-100 active:scale-90 transition">
+			<button type="button" onclick="startCameraManually()" class="h-[64px] aspect-square rounded-full flex justify-center items-center scale-100 active:scale-90 transition">
 				<svg width="64" height="65" viewBox="0 0 64 65" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<rect x="2" y="2.5" width="60" height="60" rx="30" stroke="white" stroke-width="4"/>
 				<circle cx="32" cy="32.5" r="25" fill="white"/>

@@ -2,7 +2,7 @@
 <html class="h-full overflow-hidden">
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover, minimal-ui">
 	<title>Anipet AI</title>
 	
 	<!-- Manifest for PWA -->
@@ -10,10 +10,11 @@
 	
 	<!-- iOS specific meta tags -->
 	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	<meta name="apple-mobile-web-app-title" content="Anipet AI">
 	<meta name="apple-touch-fullscreen" content="yes">
 	<meta name="apple-mobile-web-app-orientations" content="portrait">
+	<meta name="mobile-web-app-capable" content="yes">
 	<link rel="apple-touch-icon" href="apple-touch-icon.png">
 	<link rel="apple-touch-startup-image" href="apple-splash-screen.png">
 	
@@ -46,6 +47,21 @@
 			-webkit-tap-highlight-color: transparent;
 		}
 
+		/* Full screen mode - hide status bar completely */
+		@media (display-mode: standalone) {
+			html, body {
+				height: 100vh;
+				height: 100dvh; /* Dynamic viewport height */
+				padding-top: 0 !important;
+				margin-top: 0 !important;
+			}
+			
+			/* Remove any safe area considerations */
+			.safe-area-top {
+				padding-top: 0 !important;
+			}
+		}
+
 		/* iOS specific optimizations */
 		@supports (-webkit-touch-callout: none) {
 			body {
@@ -60,32 +76,6 @@
 		body {
 			overscroll-behavior: none;
 			-webkit-overflow-scrolling: touch;
-		}
-
-		/* Status bar safe area for iOS */
-		@supports (padding-top: env(safe-area-inset-top)) {
-			.safe-area-top {
-				padding-top: env(safe-area-inset-top);
-			}
-		}
-
-		/* Hide status bar entirely on iOS PWA */
-		@media (display-mode: standalone) {
-			html {
-				margin-top: 0;
-				padding-top: 0;
-			}
-			
-			.status-bar-overlay {
-				position: fixed;
-				top: 0;
-				left: 0;
-				right: 0;
-				height: env(safe-area-inset-top, 44px);
-				background: #000000;
-				z-index: 9999;
-				pointer-events: none;
-			}
 		}
 
 		/* Improve video rendering on iOS */
@@ -105,13 +95,27 @@
 		// Handle status bar on iOS
 		function handleStatusBar() {
 			if (isPWA() && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
-				// Try to minimize status bar impact
+				// Force full screen mode
 				document.documentElement.style.setProperty('--status-bar-height', '0px');
 				
-				// Add specific iOS viewport handling
+				// Update viewport for full screen
 				const viewport = document.querySelector('meta[name="viewport"]');
 				if (viewport) {
-					viewport.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover');
+					viewport.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover, minimal-ui');
+				}
+				
+				// Hide address bar and status bar completely
+				window.scrollTo(0, 1);
+				
+				// Force full screen on iOS
+				if (document.documentElement.requestFullscreen) {
+					document.documentElement.requestFullscreen().catch(() => {
+						// Fullscreen not supported or denied
+					});
+				} else if (document.documentElement.webkitRequestFullscreen) {
+					document.documentElement.webkitRequestFullscreen().catch(() => {
+						// Fullscreen not supported or denied
+					});
 				}
 			}
 		}
@@ -268,10 +272,20 @@
 			handleStatusBar(); // Handle status bar first
 			checkStoredPermission();
 			
-			// For iOS PWA, delay camera start to minimize red status bar visibility
+			// Force full screen immediately
+			setTimeout(() => {
+				if (isPWA()) {
+					// Additional full screen enforcement
+					document.body.style.paddingTop = '0px';
+					document.body.style.marginTop = '0px';
+					window.scrollTo(0, 0);
+				}
+			}, 100);
+			
+			// For iOS PWA, delay camera start to let full screen settle
 			if (isPWA() && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
 				// Wait longer on iOS PWA to let status bar settle
-				setTimeout(startCamera, 1000);
+				setTimeout(startCamera, 1500);
 			} else {
 				setTimeout(startCamera, 100);
 			}
@@ -315,17 +329,34 @@
 		document.addEventListener('contextmenu', function(e) {
 			e.preventDefault();
 		});
+
+		// Handle orientation change to maintain full screen
+		window.addEventListener('orientationchange', () => {
+			setTimeout(() => {
+				if (isPWA()) {
+					handleStatusBar();
+					window.scrollTo(0, 0);
+				}
+			}, 500);
+		});
+
+		// Force full screen when app gains focus
+		window.addEventListener('focus', () => {
+			if (isPWA()) {
+				setTimeout(() => {
+					handleStatusBar();
+					window.scrollTo(0, 0);
+				}, 100);
+			}
+		});
 	</script>
 </head>
 <body class="h-full w-full overflow-hidden m-0 p-0 select-none relative text-center items-center">
-	<!-- Status bar overlay untuk PWA iOS -->
-	<div class="status-bar-overlay"></div>
-	
 	<div class="w-full h-full absolute z-[-10] inset-0 max-w-lg mx-auto">
 		<video id="backgroundCameraPreview" class="w-full h-full object-cover" autoplay muted playsinline></video>
 	</div>
 	<div class="max-w-lg mx-auto z-50 w-full h-full bg-black/20 backdrop-blur-lg flex flex-col overflow-hidden">
-		<div class="w-full h-auto py-4 bg-black flex flex-col items-center px-4 flex-shrink-0 safe-area-top">
+		<div class="w-full h-auto py-4 bg-black flex flex-col items-center px-4 flex-shrink-0">
 			<h1 class="text-center text-white mb-2 text-lg font-medium">Anipet AI</h1>
 			<select class="appearance-none bg-neutral-800 text-white mx-auto rounded-full px-3 py-1 text-center outline-none text-sm">
 				<option value="">1.0 (Auto Detect)</option>

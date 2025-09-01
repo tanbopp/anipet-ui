@@ -34,9 +34,23 @@
 			position: fixed;
 			top: 0;
 			left: 0;
+			user-select: none;
 		}
 	</style>
 	<script>
+		// Register Service Worker
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('/sw.js')
+					.then(registration => {
+						console.log('SW registered: ', registration);
+					})
+					.catch(registrationError => {
+						console.log('SW registration failed: ', registrationError);
+					});
+			});
+		}
+
 		async function startCamera() {
 			try {
 				const video = document.getElementById('cameraPreview');
@@ -70,9 +84,20 @@
 		
 		// Start camera when page loads
 		window.addEventListener('load', startCamera);
+		
+		// Handle offline/online status
+		window.addEventListener('offline', () => {
+			console.log('App is offline');
+			// You can add offline indicators here
+		});
+		
+		window.addEventListener('online', () => {
+			console.log('App is online');
+			// You can remove offline indicators here
+		});
 	</script>
 </head>
-<body class="h-full w-full overflow-hidden m-0 p-0">
+<body class="h-full w-full overflow-hidden m-0 p-0 select-none relative text-center items-center">
 	<div class="w-full h-full absolute z-[-10] inset-0 max-w-lg mx-auto">
 		<video id="backgroundCameraPreview" class="w-full h-full object-cover" autoplay muted playsinline></video>
 	</div>
@@ -89,12 +114,15 @@
 		<div class="flex-1 bg-gradient-to-b from-black to-transparent min-h-0">
 			<div class="w-full h-full bg-neutral-300 rounded-[44px] overflow-hidden relative">
 				<video id="cameraPreview" class="w-full h-full object-cover" autoplay muted playsinline></video>
+				<div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-neutral-900/60 backdrop-blur-lg rounded-full text-white text-sm max-w-max">
+					Error: AIResponseFailed()
+				</div>
 				<div id="cameraError" class="hidden absolute inset-0 flex items-center justify-center text-gray-600">
 					<p class="text-center">Kamera tidak dapat diakses<br><small>Pastikan izin kamera telah diberikan</small></p>
 				</div>
 			</div>
 		</div>
-		<div class="w-full py-4 flex items-center justify-between px-8 flex-shrink-0">
+		<div class="w-full py-4 z-50 flex items-center justify-between px-8 flex-shrink-0">
 			<button type="button" class="h-[56px] scale-100 active:scale-90 transition bg-neutral-700/50 aspect-square rounded-full flex justify-center items-center">
 				<svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<g clip-path="url(#clip0_7733_322)">

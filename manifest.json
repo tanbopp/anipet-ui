@@ -1,40 +1,48 @@
 {
-  "name": "Centrova Sense - Anipet AI",
-  "short_name": "Centrova Sense",
-  "description": "AI-powered animal detection and identification app",
-  "start_url": "/anipet-ui/",
+  "name": "Centrova Sense",
+  "short_name": "Centrova",
+  "description": "AI-powered pet detection and analysis app",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait",
-  "scope": "/anipet-ui/",
+  "scope": "/",
   "lang": "id",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "apple-touch-icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "apple-touch-icon.png", 
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
     }
   ],
-  "categories": ["utilities", "productivity", "photo"],
+  "categories": ["utilities", "photography"],
+  "shortcuts": [
+    {
+      "name": "Open Camera",
+      "short_name": "Camera",
+      "description": "Open camera directly",
+      "url": "/?camera=true",
+      "icons": [
+        {
+          "src": "apple-touch-icon.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
   "screenshots": [
     {
-      "src": "screenshot1.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "src": "apple-splash-screen.png",
+      "sizes": "1170x2532",
+      "type": "image/png"
     }
   ]
 }

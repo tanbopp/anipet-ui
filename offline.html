@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="h-full overflow-hidden">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+	<title>Offline - Centrova Sense</title>
+	
+	<!-- Theme colors -->
+	<meta name="theme-color" content="#000000">
+	
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+		html, body {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			height: 100vh;
+			width: 100vw;
+			position: fixed;
+			top: 0;
+			left: 0;
+			user-select: none;
+		}
+		
+		.pulse-animation {
+			animation: pulse 2s infinite;
+		}
+		
+		@keyframes pulse {
+			0%, 100% {
+				opacity: 1;
+			}
+			50% {
+				opacity: 0.5;
+			}
+		}
+		
+		.offline-pattern {
+			background-image: 
+				linear-gradient(45deg, #1f2937 25%, transparent 25%),
+				linear-gradient(-45deg, #1f2937 25%, transparent 25%),
+				linear-gradient(45deg, transparent 75%, #1f2937 75%),
+				linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+			background-size: 20px 20px;
+			background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+		}
+	</style>
+</head>
+<body class="h-full w-full overflow-hidden m-0 p-0 bg-neutral-900">
+	<div class="max-w-lg mx-auto w-full h-full flex flex-col items-center justify-center px-8 text-center">
+		<!-- Offline Icon -->
+		<div class="mb-8 pulse-animation">
+			<svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M23 12C23 18.075 18.075 23 12 23S1 18.075 1 12 5.925 1 12 1s11 4.925 11 11z" stroke="#ef4444" stroke-width="2"/>
+				<path d="M8 8l8 8M16 8l-8 8" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+			</svg>
+		</div>
+		
+		<!-- Title -->
+		<h1 class="text-2xl font-bold text-white mb-4">Mode Offline</h1>
+		
+		<!-- Description -->
+		<p class="text-neutral-300 mb-2 text-lg">Anda sedang tidak terhubung ke internet</p>
+		<p class="text-neutral-400 text-sm mb-8">Beberapa fitur mungkin tidak tersedia saat ini</p>
+		
+		<!-- Offline Features Available -->
+		<div class="w-full bg-neutral-800 rounded-2xl p-6 mb-8">
+			<h3 class="text-white font-semibold mb-4 text-left">Yang masih bisa digunakan:</h3>
+			<div class="space-y-3">
+				<div class="flex items-center text-green-400">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-3">
+						<path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+					</svg>
+					<span class="text-sm">Akses kamera lokal</span>
+				</div>
+				<div class="flex items-center text-green-400">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-3">
+						<path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+					</svg>
+					<span class="text-sm">Interface aplikasi</span>
+				</div>
+				<div class="flex items-center text-red-400">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-3">
+						<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+						<path d="15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+					</svg>
+					<span class="text-sm">AI Detection online</span>
+				</div>
+				<div class="flex items-center text-red-400">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-3">
+						<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+						<path d="15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+					</svg>
+					<span class="text-sm">Cloud sync</span>
+				</div>
+			</div>
+		</div>
+		
+		<!-- Action Buttons -->
+		<div class="w-full space-y-4">
+			<button onclick="checkConnection()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full transition-colors">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="inline mr-2">
+					<path d="M1 4v16l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2H3a2 2 0 00-2 2z" stroke="currentColor" stroke-width="2"/>
+					<path d="M13 8l-2 2-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+				Coba Koneksi Lagi
+			</button>
+			
+			<button onclick="openApp()" class="w-full bg-neutral-700 hover:bg-neutral-600 text-white font-semibold py-3 px-6 rounded-full transition-colors">
+				Buka Mode Offline
+			</button>
+		</div>
+		
+		<!-- Connection Status -->
+		<div id="connectionStatus" class="mt-6 text-neutral-500 text-sm"></div>
+	</div>
+
+	<script>
+		// Check network connection
+		function checkConnection() {
+			const status = document.getElementById('connectionStatus');
+			status.textContent = 'Memeriksa koneksi...';
+			
+			// Test connection by trying to fetch a small resource
+			fetch('/?ping=1', { 
+				method: 'HEAD',
+				cache: 'no-cache'
+			})
+			.then(response => {
+				if (response.ok) {
+					status.textContent = 'Koneksi tersedia! Mengalihkan...';
+					status.className = 'mt-6 text-green-400 text-sm';
+					setTimeout(() => {
+						window.location.href = '/';
+					}, 1500);
+				} else {
+					throw new Error('No connection');
+				}
+			})
+			.catch(() => {
+				status.textContent = 'Masih belum ada koneksi internet';
+				status.className = 'mt-6 text-red-400 text-sm';
+			});
+		}
+		
+		// Open app in offline mode
+		function openApp() {
+			window.location.href = '/';
+		}
+		
+		// Auto-check connection periodically
+		setInterval(() => {
+			if (navigator.onLine) {
+				checkConnection();
+			}
+		}, 10000); // Check every 10 seconds
+		
+		// Listen for online event
+		window.addEventListener('online', () => {
+			const status = document.getElementById('connectionStatus');
+			status.textContent = 'Koneksi kembali! Mengalihkan...';
+			status.className = 'mt-6 text-green-400 text-sm';
+			setTimeout(() => {
+				window.location.href = '/';
+			}, 1500);
+		});
+		
+		// Listen for offline event
+		window.addEventListener('offline', () => {
+			const status = document.getElementById('connectionStatus');
+			status.textContent = 'Koneksi terputus';
+			status.className = 'mt-6 text-red-400 text-sm';
+		});
+		
+		// Initial connection check
+		document.addEventListener('DOMContentLoaded', () => {
+			const status = document.getElementById('connectionStatus');
+			if (navigator.onLine) {
+				status.textContent = 'Perangkat online, coba refresh halaman';
+				status.className = 'mt-6 text-yellow-400 text-sm';
+			} else {
+				status.textContent = 'Perangkat dalam mode offline';
+				status.className = 'mt-6 text-red-400 text-sm';
+			}
+		});
+	</script>
+</body>
+</html>

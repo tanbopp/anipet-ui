@@ -1,10 +1,11 @@
-// Service Worker for Centrova Sense PWA
-const CACHE_NAME = 'centrova-sense-v1';
+// Service Worker for Anipet AI PWA
+const CACHE_NAME = 'anipet-ai-v1.1';
 const urlsToCache = [
   '/',
   '/index.html',
   '/offline.html',
   '/manifest.json',
+  '/camera-test.html',
   'https://cdn.tailwindcss.com'
 ];
 

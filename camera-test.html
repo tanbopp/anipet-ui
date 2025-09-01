@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Camera Test - Anipet AI</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: sans-serif; }
+        video { width: 100%; max-width: 400px; border: 1px solid #ccc; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Camera Test - Anipet AI</h1>
+    
+    <div id="status" class="status info">
+        Click "Test Camera" to check camera access
+    </div>
+    
+    <button onclick="testCamera()">Test Camera</button>
+    <button onclick="stopCamera()">Stop Camera</button>
+    <button onclick="checkPermissions()">Check Permissions</button>
+    
+    <div style="margin: 20px 0;">
+        <video id="video" autoplay muted playsinline></video>
+    </div>
+    
+    <div id="info">
+        <h3>Browser Info:</h3>
+        <p><strong>User Agent:</strong> <span id="userAgent"></span></p>
+        <p><strong>Platform:</strong> <span id="platform"></span></p>
+        <p><strong>Is PWA:</strong> <span id="isPWA"></span></p>
+        <p><strong>Media Devices Support:</strong> <span id="mediaSupport"></span></p>
+    </div>
+
+    <script>
+        let currentStream = null;
+        
+        // Display browser info
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('platform').textContent = navigator.platform;
+        document.getElementById('isPWA').textContent = 
+            window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true ? 'Yes' : 'No';
+        document.getElementById('mediaSupport').textContent = 
+            navigator.mediaDevices ? 'Yes' : 'No';
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        async function checkPermissions() {
+            try {
+                if (!navigator.permissions) {
+                    updateStatus('Permissions API not supported', 'error');
+                    return;
+                }
+                
+                const permission = await navigator.permissions.query({name: 'camera'});
+                updateStatus(`Camera permission: ${permission.state}`, 
+                    permission.state === 'granted' ? 'success' : 'info');
+            } catch (error) {
+                updateStatus('Could not check permissions: ' + error.message, 'error');
+            }
+        }
+
+        async function testCamera() {
+            try {
+                updateStatus('Requesting camera access...', 'info');
+                
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false // No audio to prevent red status bar
+                };
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                currentStream = stream;
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                updateStatus('Camera access successful! ✅', 'success');
+                
+                // Log stream details
+                const videoTrack = stream.getVideoTracks()[0];
+                if (videoTrack) {
+                    const settings = videoTrack.getSettings();
+                    console.log('Camera settings:', settings);
+                    updateStatus(`Camera active: ${settings.width}x${settings.height} @ ${settings.frameRate}fps`, 'success');
+                }
+                
+            } catch (error) {
+                updateStatus('Camera access failed: ' + error.message, 'error');
+                console.error('Camera error:', error);
+                
+                if (error.name === 'NotAllowedError') {
+                    updateStatus('Camera permission denied. Please allow camera access and try again.', 'error');
+                } else if (error.name === 'NotFoundError') {
+                    updateStatus('No camera found on this device.', 'error');
+                } else if (error.name === 'NotReadableError') {
+                    updateStatus('Camera is being used by another application.', 'error');
+                }
+            }
+        }
+
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+                document.getElementById('video').srcObject = null;
+                updateStatus('Camera stopped', 'info');
+            } else {
+                updateStatus('No camera to stop', 'info');
+            }
+        }
+
+        // Auto-check permissions on load
+        window.addEventListener('load', checkPermissions);
+    </script>
+</body>
+</html>
